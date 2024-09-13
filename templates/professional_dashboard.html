@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Dashboard - Household Services</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <div class="container mt-5">
+        <h2 class="mb-4">Professional Dashboard</h2>
+        <nav class="mb-4">
+            <a href="{{ url_for('professional_dashboard') }}" class="btn btn-primary">Home</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+        </nav>
+
+        <h3>Your Profile</h3>
+        <form method="POST" action="{{ url_for('update_professional_profile') }}">
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" value="{{ current_user.full_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="service_type">Service Type</label>
+                <select class="form-control" id="service_type" name="service_type" required>
+                    {% for service in services %}
+                    <option value="{{ service.id }}" {% if current_user.service_type == service.id %}selected{% endif %}>{{ service.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="experience">Years of Experience</label>
+                <input type="number" class="form-control" id="experience" name="experience" value="{{ current_user.experience or '' }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+        </form>
+
+        <h3 class="mt-4">Service Requests</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Customer</th>
+                    <th>Date Requested</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in service_requests %}
+                <tr>
+                    <td>{{ request.service.name }}</td>
+                    <td>{{ request.customer.full_name }}</td>
+                    <td>{{ request.date_of_request.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ request.service_status }}</td>
+                    <td>
+                        {% if request.service_status == 'requested' %}
+                        <form method="POST" action="{{ url_for('accept_service_request', request_id=request.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('reject_service_request', request_id=request.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                        {% elif request.service_status == 'accepted' %}
+                        <form method="POST" action="{{ url_for('complete_service_request', request_id=request.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-primary">Mark as Complete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endblock %}
+</body>
+</html>

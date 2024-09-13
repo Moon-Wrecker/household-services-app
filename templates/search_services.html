@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Services - Household Services</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <div class="container mt-5">
+        <h2 class="mb-4">Search Services</h2>
+        <nav class="mb-4">
+            <a href="{{ url_for('customer_dashboard') }}" class="btn btn-primary">Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+        </nav>
+
+        <form method="GET" action="{{ url_for('search_services') }}">
+            <div class="form-group">
+                <label for="search">Search by service name or location</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ request.args.get('search', '') }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        <h3 class="mt-4">Available Services</h3>
+        <div class="row">
+            {% for service in services %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ service.name }}</h5>
+                        <p class="card-text">{{ service.description }}</p>
+                        <p class="card-text"><strong>Base Price:</strong> ${{ service.price }}</p>
+                        <a href="{{ url_for('request_service', service_id=service.id) }}" class="btn btn-primary">Request Service</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>
