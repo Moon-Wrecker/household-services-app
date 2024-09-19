@@ -1,6 +1,12 @@
-from app import app, db
-from models import User, Service, ServiceRequest
+from flask import Flask
+from models import db, User, Service, ServiceRequest
 from werkzeug.security import generate_password_hash
+
+# Create and configure the app
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///household_services.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
 
 def reset_db():
     with app.app_context():
@@ -18,11 +24,11 @@ def seed_data():
         # Create an admin user
         admin = User(
             email='admin@example.com',
-            password=generate_password_hash('admin_password', method='pbkdf2:sha256'),
+            password='admin',
             role='admin',
             full_name='Admin User',
-            is_approved=True
         )
+        admin.set_password(admin.password)
         db.session.add(admin)
 
         # Create some services
@@ -37,5 +43,5 @@ def seed_data():
     print("Initial data seeded!")
 
 if __name__ == '__main__':
-    create_db()  # This will create the tables
-    seed_data()  # This will add the initial data
+    create_db()  # Create the tables first
+    seed_data()  # Then seed the data

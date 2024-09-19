@@ -8,7 +8,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///household_services.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'  # Set a strong secret key
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app)  # Initialize SQLAlchemy with the app
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -23,8 +24,8 @@ def load_user(user_id):
 def index():
     return render_template('index.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+@app.route('/register_customer', methods=['GET', 'POST'])  # Correct route name and endpoint
+def register_customer():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -34,7 +35,7 @@ def register():
         user = User.query.filter_by(email=email).first()
         if user:
             flash('Email address already exists')
-            return redirect(url_for('register'))
+            return redirect(url_for('register_customer'))  # Use the correct route name here
 
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         new_user = User(email=email, password=hashed_password, role=role, full_name=full_name)
@@ -52,8 +53,7 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        role = request.form['role']
-        user = User.query.filter_by(email=email, role=role).first()
+        user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password, password):
             login_user(user)
@@ -72,11 +72,11 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
-@login_required
+#@login_required
 def dashboard():
     if current_user.role == 'admin':
         services = Service.query.all()
-        pending_professionals = User.query.filter_by(role='professional', approved=False).all()
+        pending_professionals = User.query.filter_by(role='professional', is_approved=False).all()
         return render_template('admin_dashboard.html', services=services, pending_professionals=pending_professionals)
     elif current_user.role == 'professional':
         service_requests = ServiceRequest.query.filter_by(professional_id=current_user.id).all()
@@ -88,7 +88,7 @@ def dashboard():
 
 # Service management routes for Admin
 @app.route('/create_service', methods=['POST'])
-@login_required
+#@login_required
 def create_service():
     if current_user.role == 'admin':
         name = request.form['service_name']
@@ -103,7 +103,7 @@ def create_service():
         return redirect(url_for('dashboard'))
 
 @app.route('/edit_service/<int:service_id>', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def edit_service(service_id):
     if current_user.role == 'admin':
         service = Service.query.get_or_404(service_id)
@@ -117,7 +117,7 @@ def edit_service(service_id):
         return render_template('edit_service.html', service=service)
 
 @app.route('/delete_service/<int:service_id>', methods=['POST'])
-@login_required
+#@login_required
 def delete_service(service_id):
     if current_user.role == 'admin':
         service = Service.query.get_or_404(service_id)
@@ -128,7 +128,7 @@ def delete_service(service_id):
 
 # Professional management routes for Admin
 @app.route('/approve_professional/<int:user_id>', methods=['POST'])
-@login_required
+#@login_required
 def approve_professional(user_id):
     if current_user.role == 'admin':
         professional = User.query.get_or_404(user_id)
@@ -146,7 +146,7 @@ def summary():
     return render_template('summary.html') 
 
 @app.route('/reject_professional/<int:user_id>', methods=['POST'])
-@login_required
+#@login_required
 def reject_professional(user_id):
     if current_user.role == 'admin':
         professional = User.query.get_or_404(user_id)
@@ -157,7 +157,7 @@ def reject_professional(user_id):
 
 # Customer actions
 @app.route('/search_services', methods=['GET'])
-@login_required
+#@login_required
 def search_services():
     search_query = request.args.get('search', '')
     if search_query:
@@ -167,7 +167,7 @@ def search_services():
     return render_template('search_services.html', services=services)
 
 @app.route('/request_service/<int:service_id>', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def request_service(service_id):
     if current_user.role == 'customer':
         service = Service.query.get_or_404(service_id)
@@ -178,4 +178,4 @@ def request_service(service_id):
         return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=1407, debug=True)

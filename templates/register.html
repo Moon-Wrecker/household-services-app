@@ -12,7 +12,6 @@
 
     {% block content %}<div class="container mt-5">
         <h2 class="mb-4">Register</h2>
-fa
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
@@ -21,7 +20,7 @@ fa
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('register') }}">
+        <form method="POST" action="{{ url_for('register_customer') }}">
             <div class="form-group">
                 <label for="email">Email address</label>
                 <input type="email" class="form-control" id="email" name="email" required>
