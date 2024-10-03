@@ -179,3 +179,7 @@ def request_service(service_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1407, debug=True)
+
+'''
+This is the documentation for the Household Services App
+'''
