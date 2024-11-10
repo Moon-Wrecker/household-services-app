@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Service Requests - Magic Hands{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            {% if current_user.role == 'admin' %}
+                All Service Requests
+            {% elif current_user.role == 'professional' %}
+                My Assigned Requests
+            {% else %}
+                My Service Requests
+            {% endif %}
+        </h1>
+        
+        {% if current_user.role == 'customer' %}
+        <a href="{{ url_for('services') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Service Request
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-control" id="status" name="status">
+                        <option value="">All</option>
+                        <option value="requested" {% if request.args.get('status') == 'requested' %}selected{% endif %}>Requested</option>
+                        <option value="assigned" {% if request.args.get('status') == 'assigned' %}selected{% endif %}>Assigned</option>
+                        <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_range" class="form-label">Date Range</label>
+                    <select class="form-control" id="date_range" name="date_range">
+                        <option value="">All Time</option>
+                        <option value="today" {% if request.args.get('date_range') == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if request.args.get('date_range') == 'week' %}selected{% endif %}>This Week</option>
+                        <option value="month" {% if request.args.get('date_range') == 'month' %}selected{% endif %}>This Month</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           placeholder="Search by ID or service name" 
+                           value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                    <a href="{{ url_for('service_requests') }}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service Requests Table -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Service</th>
+                            {% if current_user.role == 'admin' %}
+                                <th>Customer</th>
+                                <th>Professional</th>
+                            {% elif current_user.role == 'professional' %}
+                                <th>Customer</th>
+                            {% else %}
+                                <th>Professional</th>
+                            {% endif %}
+                            <th>Request Date</th>
+                            <th>Preferred Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in service_request %}
+                        <tr>
+                            <td>{{ request.id }}</td>
+                            <td>{{ request.service_id.name }}</td>
+                            {% if current_user.role == 'admin' %}
+                                <td>{{ request.customer_id.full_name }}</td>
+                                <td>{{ request.professional_id.full_name if request.professional else 'Not Assigned' }}</td>
+                            {% elif current_user.role == 'professional' %}
+                                <td>{{ request.customer.full_name }}</td>
+                            {% else %}
+                                <td>{{ request.professional_id.full_name if request.professional else 'Not Assigned' }}</td>
+                            {% endif %}
+                            <td>{{ request.date_of_request.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ request.preferred_time.strftime('%Y-%m-%d %H:%M') if request.preferred_time else 'Not specified' }}</td>
+                            <td>
+                                <span class="badge badge-pill 
+                                    {% if request.service_status == 'requested' %}badge-warning
+                                    {% elif request.service_status == 'assigned' %}badge-info
+                                    {% elif request.service_status == 'in_progress' %}badge-primary
+                                    {% elif request.service_status == 'completed' %}badge-success
+                                    {% else %}badge-danger{% endif %}">
+                                    {{ request.service_status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('service_request', request_id=request.id) }}" 
+                                       class="btn btn-sm btn-info" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if current_user.role == 'professional' and request.service_status == 'requested' %}
+                                        <form method="POST" action="{{ url_for('service_request', request_id=request.id) }}" class="d-inline">
+                                            <input type="hidden" name="action" value="accept">
+                                            <button type="submit" class="btn btn-sm btn-success" title="Accept Request">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    {% if current_user.role == 'customer' and request.service_status == 'in_progress' %}
+                                        <form method="POST" action="{{ url_for('service_request', request_id=request.id) }}" class="d-inline">
+                                            <input type="hidden" name="action" value="complete">
+                                            <button type="submit" class="btn btn-sm btn-success" title="Mark as Complete">
+                                                <i class="fas fa-check-double"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    {% if request.service_status == 'completed' and not request.review_text %}
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-toggle="modal" 
+                                                data-target="#reviewModal{{ request.id }}" 
+                                                title="Add Review">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if not service_request %}
+            <div class="text-center py-4">
+                <p class="text-muted">No service requests found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+{% for request in service_request %}
+{% if request.service_status == 'completed' and not request.review_text %}
+<div class="modal fade" id="reviewModal{{ request.id }}" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel{{ request.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('service_request', request_id=request.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reviewModalLabel{{ request.id }}">Add Review</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="review">
+                    <div class="form-group">
+                        <label for="rating{{ request.id }}">Rating</label>
+                        <select class="form-control" id="rating{{ request.id }}" name="rating" required>
+                            <option value="">Select rating</option>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Very Good</option>
+                            <option value="3">3 - Good</option>
+                            <option value="2">2 - Fair</option>
+                            <option value="1">1 - Poor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="review_text{{ request.id }}">Review</label>
+                        <textarea class="form-control" id="review_text{{ request.id }}" 
+                                  name="review_text" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Handle filter form submission
+    $('#filter-form').on('submit', function(e) {
+        e.preventDefault();
+        let queryParams = $(this).serialize();
+        window.location.href = "{{ url_for('service_requests') }}?" + queryParams;
+    });
+});
+</script>
+{% endblock %}
