@@ -72,15 +72,25 @@ def dashboard():
         service_count = Service.query.count()
         service_request_count = ServiceRequest.query.count()
         users = User.query.all()
+        pending_professionals = User.query.filter_by(role='professional').all()
         services = Service.query.all()
         service_requests = ServiceRequest.query.all()
-        return render_template('admin_dashboard.html', users=users, services=services, service_requests=service_requests, total_users=69)
+        active_services = ServiceRequest.query.count()
+        pending_approvals = User.query.filter_by(document_verified=False).count()
+        return render_template('admin_dashboard.html', users=users, services=services, service_requests=service_requests, 
+                               total_users=user_count, customer=customer_count, total_services=service_count, total_service_requests=service_request_count, 
+                               pending_professionals = pending_professionals, active_services = active_services, pending_approvals=pending_approvals)
     elif current_user.role == 'professional':
         service_requests = ServiceRequest.query.filter_by(professional_id=current_user.id).all()
         return render_template('professional_dashboard.html', service_requests=service_requests)
     else:
         service_requests = ServiceRequest.query.filter_by(customer_id=current_user.id).all()
         return render_template('customer_dashboard.html', service_requests=service_requests)
+    
+@app.route('/approve_professional/<int:user_id>')
+@login_required
+def approve_professional():
+    pass
 
 @app.route('/services')
 def services():
@@ -150,6 +160,23 @@ def service_request(request_id):
 @app.route('/admin/users')
 @login_required
 def admin_users():
+
+    if current_user.role == 'admin':
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'verify':  # Edit an existing service
+                user_id = request.form['user_id']
+                user = Service.query.get(user_id)
+                if user:
+                    user.document_verified = True
+                    db.session.commit()
+                    flash('User Verified Successfully.', 'success')
+                else:
+                    flash('User Not Found.', 'danger')
+
+
+
     if current_user.role == 'admin':
         users = User.query.all()
         return render_template('admin_users.html', users=users)
@@ -183,9 +210,6 @@ def admin_services():
     if current_user.role == 'admin':
         if request.method == 'POST':
             action = request.form.get('action')
-            
-            
-            
             if action == 'edit':  # Edit an existing service
                 service_id = request.form['service_id']
                 service = Service.query.get(service_id)

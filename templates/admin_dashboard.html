@@ -86,37 +86,32 @@
         <div class="col-xl-8 col-lg-7">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Pending Professional Approvals</h6>
-                    <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-primary">View All</a>
+                    <h6 class="m-0 font-weight-bold text-primary">Services</h6>
+                    <a href="{{ url_for('services') }}" class="btn btn-sm btn-primary">View All</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Service Type</th>
-                                    <th>Experience</th>
-                                    <th>Date Applied</th>
-                                    <th>Actions</th>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Service Name</th>
+                                        <th>Base Price</th>
+                                        <th>Actions</th>
+                                    </tr>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for professional in pending_professionals %}
+                                {% for ser in services %}
                                 <tr>
-                                    <td>{{ professional.id }}</td>
-                                    <td>{{ professional.full_name }}</td>
-                                    <td>{{ professional.service_type }}</td>
-                                    <td>{{ professional.experience }} years</td>
-                                    <td>{{ professional.date_created.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ ser.id }}</td>
+                                    <td>{{ ser.name }}</td>
+                                    <td>₹ {{ ser.price }}</td>
                                     <td>
-                                        <form action="{{ url_for('approve_professional', user_id=professional.id) }}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                        <form action="{{ url_for('services') }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success">Edit</button>
                                         </form>
-                                        <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#viewDocsModal{{ professional.id }}">
-                                            View Docs
-                                        </button>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -144,6 +139,54 @@
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Pending Approvals -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Pending Professional Approvals</h6>
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Experience</th>
+                                        <th>Service Name</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for professional in pending_professionals %}
+                                <tr>
+                                    <td>{{ professional.id }}</td>
+                                    <td>{{ professional.full_name }}</td>
+                                    <td>{{ professional.experience }} years</td>
+                                    <td>{{ professional.service_type }}</td>
+                                    <td>
+                                        <form action="{{ url_for('approve_professional', user_id=professional.id) }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#viewDocsModal{{ professional.id }}">
+                                            View Docs
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
