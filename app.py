@@ -15,7 +15,9 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    #return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
+
 
 @app.route('/')
 def index():
@@ -62,6 +64,8 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html')
 
+from sqlalchemy.orm import aliased
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -74,12 +78,27 @@ def dashboard():
         users = User.query.all()
         pending_professionals = User.query.filter_by(role='professional').all()
         services = Service.query.all()
-        service_requests = ServiceRequest.query.all()
+        pending_requests= ServiceRequest.query.filter_by(service_status='requested').count()
+
+        customer_alias = aliased(User)
+        professional_alias = aliased(User)
+    
+        # Query with aliases for user joins
+        service_requests = (
+            db.session.query(ServiceRequest)
+            .join(Service, ServiceRequest.service_id == Service.id)
+            .join(customer_alias, ServiceRequest.customer_id == customer_alias.id)
+            .outerjoin(professional_alias, ServiceRequest.professional_id == professional_alias.id)
+            .add_columns(Service.name.label('service_name'), 
+                         customer_alias.full_name.label('customer_name'),
+                         professional_alias.full_name.label('professional_name'))
+            .all()
+        )
         active_services = ServiceRequest.query.count()
         pending_approvals = User.query.filter_by(document_verified=False).count()
-        return render_template('admin_dashboard.html', users=users, services=services, service_requests=service_requests, 
+        return render_template('admin_dashboard.html', users=users, services=services, service_requests=service_requests, service=services,
                                total_users=user_count, customer=customer_count, total_services=service_count, total_service_requests=service_request_count, 
-                               pending_professionals = pending_professionals, active_services = active_services, pending_approvals=pending_approvals)
+                               pending_professionals = pending_professionals, active_services = active_services, pending_approvals=pending_approvals, pending_requests=pending_requests)
     elif current_user.role == 'professional':
         service_requests = ServiceRequest.query.filter_by(professional_id=current_user.id).all()
         return render_template('professional_dashboard.html', service_requests=service_requests)
