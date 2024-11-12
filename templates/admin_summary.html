@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Summary - Magic Hands{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Admin Summary</h2>
+    
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Overall Customer Ratings</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="customerRatingsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Service Requests Summary</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="serviceRequestsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Data for Customer Ratings Chart (Doughnut)
+const customerRatingsData = {
+    labels: ['Excellent', 'Good', 'Average', 'Poor'],
+    datasets: [{
+        data: {{ customer_ratings | tojson }},
+        backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b'],
+        hoverBackgroundColor: ['#2e59d9', '#17a673', '#f4b619', '#e02d2d'],
+        hoverBorderColor: 'rgba(234, 236, 244, 1)',
+    }],
+};
+
+// Data for Service Requests Chart (Bar)
+const serviceRequestsData = {
+    labels: ['Requested', 'Assigned', 'Closed'],
+    datasets: [{
+        label: 'Service Requests',
+        data: {{ service_requests_summary | tojson }},
+        backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e'],
+        hoverBackgroundColor: ['#2e59d9', '#17a673', '#f4b619'],
+        borderColor: 'rgba(234, 236, 244, 1)',
+        borderWidth: 1,
+    }],
+};
+
+// Configuration for Customer Ratings Chart
+const customerRatingsConfig = {
+    type: 'doughnut',
+    data: customerRatingsData,
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+};
+
+// Configuration for Service Requests Chart
+const serviceRequestsConfig = {
+    type: 'bar',
+    data: serviceRequestsData,
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+};
+
+// Render the charts
+const customerRatingsChart = new Chart(document.getElementById('customerRatingsChart'), customerRatingsConfig);
+const serviceRequestsChart = new Chart(document.getElementById('serviceRequestsChart'), serviceRequestsConfig);
+</script>
+{% endblock %}

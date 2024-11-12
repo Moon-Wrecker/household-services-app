@@ -96,9 +96,9 @@ def dashboard():
         )
         active_services = ServiceRequest.query.count()
         pending_approvals = User.query.filter_by(document_verified=False).count()
-        return render_template('admin_dashboard.html', users=users, services=services, service_requests=service_requests, service=services,
-                               total_users=user_count, customer=customer_count, total_services=service_count, total_service_requests=service_request_count, 
-                               pending_professionals = pending_professionals, active_services = active_services, pending_approvals=pending_approvals, pending_requests=pending_requests)
+        return render_template('admin_dashboard.html', users=users, services=services, service_requests=service_requests,
+                                service=services, total_users=user_count, customer=customer_count, total_services=service_count,
+                                total_service_requests=service_request_count, pending_professionals = pending_professionals, active_services = active_services, pending_approvals=pending_approvals, pending_requests=pending_requests)
     elif current_user.role == 'professional':
         service_requests = ServiceRequest.query.filter_by(professional_id=current_user.id).all()
         return render_template('professional_dashboard.html', service_requests=service_requests)
@@ -203,25 +203,6 @@ def admin_users():
         flash('You are not authorized to access this page.', 'danger')
         return redirect(url_for('dashboard'))
 
-# @app.route('/admin/services', methods=['GET', 'POST'])
-# @login_required
-# def admin_services():
-#     if current_user.role == 'admin':
-#         if request.method == 'POST':
-#             name = request.form['name']
-#             price = request.form['price']
-#             description = request.form['description']
-#             time_required = request.form['time_required']
-#             category = request.form['category']
-#             service = Service(name=name, price=price, description=description, time_required=time_required, category=category)
-#             db.session.add(service)
-#             db.session.commit()
-#             flash('Service created successfully.', 'success')
-#         services = Service.query.all()
-#         return render_template('admin_services.html', services=services)
-#     else:
-#         flash('You are not authorized to access this page.', 'danger')
-#         return redirect(url_for('dashboard'))
 
 @app.route('/admin/services', methods=['GET', 'POST'])
 @login_required
@@ -267,6 +248,39 @@ def admin_services():
         # Retrieve all services for display
         services = Service.query.all()
         return render_template('admin_services.html', services=services)
+    else:
+        flash('You are not authorized to access this page.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+from flask import render_template
+import random
+
+@app.route('/admin/summary')
+def admin_summary():
+    # Sample data - replace this with actual database queries
+    customer_ratings = [50, 30, 15, 5]  # [Excellent, Good, Average, Poor]
+    """
+    To be fixed Later
+    1. add in nav bar
+    2. add customer rating using models
+    """
+    service_requests_summary = [ServiceRequest.query.filter_by(service_status='requested').count(), ServiceRequest.query.filter_by(service_status='assigned').count(), ServiceRequest.query.filter_by(service_status='closed').count()]
+    
+    return render_template('admin_summary.html', 
+                           customer_ratings=customer_ratings, 
+                           service_requests_summary=service_requests_summary)
+
+@app.route('/service-status-summary')
+@login_required
+def service_status_summary():
+    if current_user.role == 'admin':
+        status_counts = db.session.query(
+            ServiceRequest.service_status, 
+            func.count(ServiceRequest.service_status)
+        ).group_by(ServiceRequest.service_status).all()
+        
+        status_summary = {status: count for status, count in status_counts}
+        return jsonify(status_summary)
     else:
         flash('You are not authorized to access this page.', 'danger')
         return redirect(url_for('dashboard'))
